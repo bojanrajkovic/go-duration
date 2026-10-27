@@ -29,7 +29,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc",
-    "test": "vitest run",
+    "test": "vitest run --typecheck",
     "lint": "oxlint",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check ."
