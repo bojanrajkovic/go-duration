@@ -1,0 +1,14 @@
+{
+  "extends": ["@tsconfig/strictest/tsconfig.json", "@tsconfig/node26/tsconfig.json"],
+  "compilerOptions": {
+    "verbatimModuleSyntax": true,
+    "isolatedDeclarations": true,
+    "noUncheckedSideEffectImports": true,
+    "skipLibCheck": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "noEmit": true
+  },
+  "include": ["src", "tests"]
+}
