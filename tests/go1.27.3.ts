@@ -234,3 +234,17 @@ export const parseDurationErrorTests: ReadonlyArray<{
     skip: false,
   },
 ];
+
+export const durationTests: ReadonlyArray<{ readonly str: string; readonly d: bigint }> = [
+  { str: "0s", d: 0n },
+  { str: "1ns", d: 1n * Nanosecond },
+  { str: "1.1µs", d: 1100n * Nanosecond },
+  { str: "2.2ms", d: 2200n * Microsecond },
+  { str: "3.3s", d: 3300n * Millisecond },
+  { str: "4m5s", d: 4n * Minute + 5n * Second },
+  { str: "4m5.001s", d: 4n * Minute + 5001n * Millisecond },
+  { str: "5h6m7.001s", d: 5n * Hour + 6n * Minute + 7001n * Millisecond },
+  { str: "8m0.000000001s", d: 8n * Minute + 1n * Nanosecond },
+  { str: "2562047h47m16.854775807s", d: (1n << 63n) - 1n },
+  { str: "-2562047h47m16.854775808s", d: -(1n << 63n) },
+];

@@ -1,7 +1,8 @@
 # @bojanrajkovic/go-duration
 
-Go's [`time.ParseDuration`](https://pkg.go.dev/time#ParseDuration) for JavaScript, built on
-`Temporal.Duration`. It passes Go 1.27.3's `ParseDuration` tests.
+Go's [`time.ParseDuration`](https://pkg.go.dev/time#ParseDuration) and
+[`Duration.String`](https://pkg.go.dev/time#Duration.String) for JavaScript, built on
+`Temporal.Duration`. It passes the duration tests from Go 1.27.3's `time` package.
 
 ## Requirements
 
@@ -75,6 +76,72 @@ function timeoutFrom(input: string): Temporal.Duration {
 Error messages match Go's byte for byte. Go reports values outside the int64 nanosecond range
 (about ±292 years) as `invalid duration`, and so does this package, but its `detail.kind` is
 `overflow` so you can tell the two cases apart.
+
+## Stringifying
+
+`stringifyDuration` writes a duration in Go's syntax, the way Go's `Duration.String` does. Use it
+when a program reads the result: a config file for a Go tool, a command-line flag, or an API that
+takes strings like `"30s"`. It takes a `Temporal.Duration` or a duration-like object:
+
+```ts
+import { stringifyDuration } from "@bojanrajkovic/go-duration";
+
+stringifyDuration({ minutes: 90 }); // "1h30m0s"
+stringifyDuration({ milliseconds: 1500 }); // "1.5s"
+stringifyDuration(Temporal.Duration.from({ microseconds: 1500 })); // "1.5ms"
+stringifyDuration({ seconds: 0 }); // "0s"
+```
+
+Durations under a second use the largest unit that fits: `ns`, `µs` (always U+00B5), or `ms`.
+Longer durations use hours, minutes, and seconds, and like Go, hours is the largest unit, so two
+days is `"48h0m0s"`.
+
+The input can't contain years, months, weeks, or days, because their length depends on the
+calendar. Object literals with those fields fail to compile. A `Temporal.Duration` that has them
+throws a `RangeError`, as does a total outside the int64 nanosecond range. Temporal itself throws a
+`RangeError` for objects with mixed signs or non-integer fields:
+
+```ts
+import { stringifyDuration } from "@bojanrajkovic/go-duration";
+
+function timeoutFlag(timeout: Temporal.Duration): string {
+  try {
+    return `--timeout=${stringifyDuration(timeout)}`;
+  } catch (error) {
+    if (!(error instanceof RangeError)) {
+      throw error;
+    }
+    throw new Error(`${timeout.toString()} can't be written as a Go duration`, { cause: error });
+  }
+}
+```
+
+A duration from calendar math, such as `PlainDate.until`, often has days. If 24-hour days are
+right for your data, convert it first with `timeout.round({ largestUnit: "hours" })`.
+
+Strings aren't accepted, so a Go duration string can't be passed to `stringifyDuration` by mistake.
+Strings fail to compile, and untyped callers get a `TypeError`. To stringify an ISO 8601 string,
+convert it first with `Temporal.Duration.from("PT1H")`.
+
+Stringifying and parsing round-trip exactly. For every duration `stringifyDuration` accepts,
+`parseDuration(stringifyDuration(d))` has the same total length as `d`, balanced to hours, so
+`Temporal.Duration.compare` returns 0 for the pair.
+
+### Text for people
+
+Go's syntax isn't meant for display. For text like "2 days, 7 hours", use `Intl.DurationFormat`,
+which takes a `Temporal.Duration` and handles plurals and locales:
+
+```ts
+import { parseDuration } from "@bojanrajkovic/go-duration";
+
+const uptime = parseDuration("55h3m").round({ largestUnit: "days" });
+new Intl.DurationFormat("en", { style: "long" }).format(uptime); // "2 days, 7 hours, 3 minutes"
+new Intl.DurationFormat("en", { style: "narrow" }).format(uptime); // "2d 7h 3m"
+```
+
+`round({ largestUnit: "days" })` treats each day as 24 hours. For relative text like "2 days ago",
+use `Intl.RelativeTimeFormat`.
 
 ## Differences from Go
 
