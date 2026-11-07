@@ -39,5 +39,5 @@ npm trust github @bojanrajkovic/go-duration --repo bojanrajkovic/go-duration --f
 npmjs.com. Once a CI release succeeds, set the package's publishing access to "Require
 two-factor authentication and disallow tokens" on npmjs.com.
 
-The repository is private, so npm doesn't generate provenance attestations. They need a public
-repository.
+The repository is public, so npm attaches a provenance attestation to each release published
+from CI. No flag is needed.
